@@ -1,0 +1,56 @@
+---
+# tasks file for android-ndk setup
+
+- name: Create url
+  set_fact:
+    ndk_url="https://dl.google.com/android/repository/android-ndk-r{{ android_ndk_cfg.version }}-{{ ansible_system | lower }}-x86_64.zip"
+
+- name: Check if already downloaded
+  stat:
+    path: "{{ tools_path }}/{{ ndk_url | basename }}"
+  register: download
+
+- name: "Ensures if destination folder exists"
+  file:
+    path={{ tools_path }}
+    state=directory
+  when: download.stat.exists == false
+
+- name: Download Android NDK chosen version
+  get_url:
+    url: "{{ ndk_url }}"
+    dest: "{{ tools_path }}"
+    validate_certs: no
+  when: download.stat.exists == false
+
+- name: Check if already unarchived
+  stat:
+    path: "{{ tools_path }}/android-ndk/android-ndk-r{{ android_ndk_cfg.version }}"
+  register: unarchived
+
+- name: "Ensures if destination folder exists"
+  file:
+    path="{{ tools_path }}/android-ndk"
+    state=directory
+  when: unarchived.stat.exists == false
+
+- name: "Ubuntu: Ensure required package for unarchive module is installed"
+  apt:
+    name: unzip
+    state: present
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+  become: yes
+
+- name: "MacOS: Ensure required package for unarchive module is installed"
+  homebrew:
+    name: unzip
+    state: present
+  when: ansible_distribution == "MacOSX"
+
+- name: Extract NDK
+  unarchive:
+    src: "{{ tools_path }}/{{ ndk_url | basename }}"
+    dest: "{{ tools_path }}/android-ndk"
+    remote_src: yes
+  when: unarchived.stat.exists == false

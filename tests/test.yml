@@ -1,0 +1,12 @@
+---
+- hosts: all
+
+  name: Test ansible-android-ndk role
+
+  vars:
+    tools_path: ~/tools
+    android_ndk_cfg:
+      version: 10e
+
+  roles:
+    - role: ../../ansible-android-ndk
